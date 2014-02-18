@@ -7,5 +7,6 @@ package edu.cmu.cs.lti.ark.diversity.formatting;
  */
 
 public class DataFormatter {
+	
 
 }
