@@ -8,9 +8,6 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
 public interface Fst<T,U> {
 	
-	public SequenceResult<T> getSequence(
-			List<U> given, 
-			List<Map<T, Double>> dd, 
-			TagSet<T> tagSet);
+	public SequenceResult<T> getSequence(List<U> given, List<Map<T, Double>> dd, TagSet<T> tagSet);
 
 }

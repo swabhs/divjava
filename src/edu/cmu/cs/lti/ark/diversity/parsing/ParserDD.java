@@ -6,39 +6,37 @@ import java.util.Map;
 
 import edu.cmu.cs.lti.ark.cle.ChuLiuEdmonds;
 import edu.cmu.cs.lti.ark.cle.Weighted;
-import edu.cmu.cs.lti.ark.diversity.fst.UniHamDistFst;
+import edu.cmu.cs.lti.ark.diversity.fst.AdditiveUniHamDistFst;
+import edu.cmu.cs.lti.ark.diversity.fst.Fst;
 import edu.cmu.cs.lti.ark.diversity.main.DdHelper;
+import edu.cmu.cs.lti.ark.diversity.main.DdResult;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
 public class ParserDD {
-	
-	private static final int ROOT = 0;
 
-	private static List<Integer> getTree(double[][] weights) {
+	private static final int ROOT = 0;
+	private static final double MAX_ITERATIONS = 50;
+	private static final double HAMMING_WT = 1.0;
+	
+	private double[][] weights;
+	private DdHelper<Integer> helper = new DdHelper<Integer>();
+
+	private List<Integer> getTree() {
 		Weighted<Map<Integer, Integer>> result = ChuLiuEdmonds.getMaxSpanningTree(weights, ROOT);
 		Map<Integer, Integer> value = result.val;
-		List<Integer> parents = new ArrayList<Integer>();
+		List<Integer> tree = new ArrayList<Integer>();
 		
-		// Print maximum branching per node.
-		// System.out.println("Maximum branching:");
-		
-		//parents.add(0);
-		for (int node = 1; node <= value.size(); ++node) {
-			//System.out.println(parent.get(node) + " -> " + node);
-			parents.add(value.get(node));
+		for (int child = 1; child <= value.size(); ++child) {
+			tree.add(value.get(child));
 		}
-		//System.out.println(result.weight);
-		//System.out.println(parents);
-		return parents;
+		return tree;
 	}
 	
-	private static void updateWeights(double[][] weights, List<Map<Integer, Double>> dd) {
+	private void updateWeights(List<Map<Integer, Double>> dd) {
 		for (Integer parent : dd.get(0).keySet()) {
 		     for (int child = 0; child < dd.size(); child++) {
 				weights[parent][child] -= dd.get(child).get(parent);
-				//System.out.print(weights[parent][child]+"\t");
 			}
-			//System.out.println();
 		}
 	}
 	
@@ -50,54 +48,45 @@ public class ParserDD {
 		return new TagSet<Integer>(tags);
 	}
 	
-	public static Result run(double[][] weights) {
-		final double maxIterations = 50;
+	public DdResult<Integer> run(double[][] givenWeights, int k) {
+		weights = givenWeights;
 		// n = length of sentence, n+1 = length of tagset
 		final int n = weights[0].length - 1; 
 		
 		TagSet<Integer> tagSet = createTagset(n+1);
 		
-		UniHamDistFst<Integer> fst = new UniHamDistFst<Integer>();
-		DdHelper<Integer> helper = new DdHelper<Integer>();
+		Fst<Integer, List<Integer>> fst = new AdditiveUniHamDistFst<Integer>(HAMMING_WT);
+				
+		List<List<Integer>> kBestTrees = new ArrayList<List<Integer>>();
+		List<Integer> bestTree = getTree();
+		kBestTrees.add(bestTree);
 		
-		List<Integer> bestTree = getTree(weights);
-		List<Map<Integer, Double>> dd = helper.init(n, tagSet);
+		int iterations[] = new int[k];
 		
-		List<Integer> tags1 = null;
-		List<Integer> tags2 = null;
-		int iter = 1;
-		while (iter <= maxIterations) {
-			double stepSize = 1.0 / Math.sqrt(iter);
-						
-			tags2 = fst.run(bestTree, dd, tagSet);	
-			tags1 = getTree(weights);
-			
-			if (helper.agree(tags1, tags2)) {
-				return new Result(bestTree, tags1, tags2, iter);
-			} else {
-				dd = helper.update(dd, tags1, tags2, stepSize, tagSet);
-				updateWeights(weights, dd);
+		for (int i = 1; i < k; i++) {
+			List<Integer> cleTree = null;
+			List<Integer> fstTree = null;
+			List<Map<Integer, Double>> dd = helper.init(n, tagSet);
+			iterations[i] = 1;
+			while (iterations[i] <= MAX_ITERATIONS) {
+				double stepSize = 1.0 / Math.sqrt(iterations[i]);
+							
+				fstTree = fst.getSequence(kBestTrees, dd, tagSet).getSequence();	
+				cleTree = getTree();
+				
+				if (helper.agree(cleTree, fstTree)) {
+					kBestTrees.add(cleTree);
+					break;
+				} else {
+					dd = helper.update(dd, cleTree, fstTree, stepSize, tagSet);
+					updateWeights(dd);
+				}
+				iterations[i] += 1;
 			}
-			iter += 1;
-		}
-		return new Result(bestTree, tags1, tags2, -1);		
+			if (iterations[i] == MAX_ITERATIONS+1) { // did not converge
+				iterations[i] = -1;
+			}
+		}	
+		return new DdResult<Integer>(kBestTrees, iterations);		
 	}
-	
-	static class Result {
-		List<Integer> bestTree;
-		List<Integer> cleTree;
-		List<Integer> fstTree;
-		
-		int iterations;
-		
-		Result(List<Integer> bestTree, List<Integer> cleTree,
-				List<Integer> fstTree, int iterations) {
-			super();
-			this.bestTree = bestTree;
-			this.cleTree = cleTree;
-			this.fstTree = fstTree;
-			this.iterations = iterations;
-		}
-	}
-
 }

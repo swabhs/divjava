@@ -3,8 +3,8 @@ package edu.cmu.cs.lti.ark.diversity.tagging;
 import java.util.List;
 import java.util.Map;
 
+import edu.cmu.cs.lti.ark.diversity.main.DdResult;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
-import edu.cmu.cs.lti.ark.diversity.tagging.TaggerDD.Result;
 import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
 import edu.cmu.cs.lti.ark.diversity.utils.Tuple;
 
@@ -38,20 +38,54 @@ public class TaggerMain {
 		Map<String, Double> hmm = DataReader.readHmmParams(hmmFile);
 		TagSet<String> tagSet = DataReader.readTagset(tagFile);
 		
-		//System.out.println(sentences.size() + " " + tagSet.getSize());
-		double convergenceRatio = 0.0;
-		double averageIterations = 0.0;
-		double averageAccuracySec = 0.0;
-		double avgAccBest = 0.0;
+		final int k = 5;
 		
-		int c = 0;
-		for (List<String> sentence : sentences) {
-			System.err.println(c + " : length = " + sentence.size());
+		double exWithDuplicates = 0.0;
+		double accuracies[] = new double[k];
+		
+		double convRates[] = new double[k]; 
+		double avgIterations[] = new double[k];
+		
+		int example = 0;
+		for (example = 0; example < sentences.size(); example++) {
+			List<String> sentence = sentences.get(example);
+			if (sentence.size() > 15) {
+				continue;
+			}
+			System.err.println("example : " + example + " : length = " + sentence.size());
 			System.out.println(sentence);
-			TaggerDD dd = new TaggerDD(tagSet, hmm);
 			
-			Result result = dd.run(sentence);
-			int iter = result.iterations;
+			TaggerDD taggerDD = new TaggerDD(tagSet, hmm);
+			DdResult<String> result = taggerDD.run(sentence, k);
+			List<String> goldTagSeq = trueTagSeqs.get(example);
+			
+			accuracies[0] += evaluate(goldTagSeq, result.kBest.get(0));
+			convRates[0] += 1;
+			avgIterations[0] += 1;
+			System.out.println("1 best = " + result.kBest.get(0));
+			
+			boolean hasDuplicates = false;
+			for (int i = 1; i < k; i++) {
+				if (result.iterations[i] == -1) {
+					System.err.println(i+1 + " best does NOT converge");
+					break;
+				}
+				
+				if (result.kBest.get(i).equals(result.kBest.get(i-1))) {
+					 hasDuplicates = true;
+				}
+				accuracies[i] += evaluate(goldTagSeq, result.kBest.get(i));
+				convRates[i] += 1;
+				//System.err.println(i + " best converges in " + result.iterations[i] + " iterations\n");
+				avgIterations[i] += result.iterations[i];		
+				System.out.println(i+1 + " best = " + result.kBest.get(i));		
+			}
+			if (hasDuplicates) {
+				exWithDuplicates += 1.0;
+			}
+			System.out.println();
+			
+			/*int iter = result.iterations;
 			
 			List<String> bestTagSeq = result.bestTagSeq;
 			System.out.println(bestTagSeq);
@@ -66,19 +100,15 @@ public class TaggerMain {
 				convergenceRatio += 1;
 				averageIterations += iter;
 				averageAccuracySec += evaluate(trueTagSeqs.get(c), predTagSeq);
-			}
-			
-			c += 1;
-			if (c==50) {
-				break;
-			}
+			}*/		
 		}
 		
-		averageIterations /= convergenceRatio;
-		averageAccuracySec /= convergenceRatio;
-		System.err.println("\n\nConvergence Ratio = " + convergenceRatio/c);
-		System.err.println("Average Iterations = " + averageIterations);
-		System.err.println("Average Accuracy of Best = " + avgAccBest/c);
-		System.err.println("Average Accuracy = " + averageAccuracySec);
+		System.out.println("% of duplicates = " + exWithDuplicates*100/sentences.size());
+		for (int i = 0; i < k; i++) {
+			System.out.println(i+1 + "\n-----------------\n");
+			System.out.println("avg accuracy = " + accuracies[i]/convRates[i]);
+			System.out.println("convergence  = " + convRates[i]*100/example);
+			System.out.println("iterations   = " + avgIterations[i]/convRates[i]);
+		}
 	}
 }
