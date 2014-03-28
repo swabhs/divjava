@@ -84,17 +84,4 @@ public class TaggerDD {
 		}
 		return new DdResult<String>(kBestTagSeqs, iterations);
 	}
-	
-	/*class Result {
-		int iterations;
-		List<String> bestTagSeq;
-		List<String> secondBestTagSeq;
-		
-		public Result(int iterations, List<String> bestTagSeq,	List<String> secondBestTagSeq) {
-			this.iterations = iterations;
-			this.bestTagSeq = bestTagSeq;
-			this.secondBestTagSeq = secondBestTagSeq;
-		}
-		
-	}*/
 }

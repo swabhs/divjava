@@ -15,11 +15,15 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 public class ParserDD {
 
 	private static final int ROOT = 0;
-	private static final double MAX_ITERATIONS = 50;
-	private static final double HAMMING_WT = 1.0;
+	private static final double MAX_ITERATIONS = 500;
+	private final double HAMMING_WT;
 	
 	private double[][] weights;
 	private DdHelper<Integer> helper = new DdHelper<Integer>();
+	
+	public ParserDD(double hammingWt) {
+		HAMMING_WT = hammingWt;
+	}
 
 	private List<Integer> getTree() {
 		Weighted<Map<Integer, Integer>> result = ChuLiuEdmonds.getMaxSpanningTree(weights, ROOT);
