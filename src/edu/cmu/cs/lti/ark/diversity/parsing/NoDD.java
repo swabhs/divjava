@@ -1,75 +1,51 @@
 package edu.cmu.cs.lti.ark.diversity.parsing;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import edu.cmu.cs.lti.ark.diversity.main.DdResult;
-import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
+import edu.cmu.cs.lti.ark.diversity.main.KBest;
 
 public class NoDD {
-	
-	/*private static String weightsFileName = "data/dev_edges.weights";
-	private static String depsFileName = "data/dev.deps";
 
-	public static void main(String[] args) {
-		List<double[][]> weights = DataReader.readEdgeWeights(weightsFileName);
-		List<List<Integer>> goldDepParses = DataReader.readDepParse(depsFileName);
-		
-		final int k = 5;
-		
-		double exWithDuplicates = 0.0;
-		double accuracies[] = new double[k];
-		
-		double convRates[] = new double[k]; 
-		double avgIterations[] = new double[k];
-		
-		int example = 0;
-		for (double[][] graph : weights) {
-			/*if (graph.length > 10) {
-				continue;
-			}*/
-			/*System.err.println("example no. "+ example);
-			
-			
-			// Assuming graphs are all sufficiently structured to be different
-			List<Integer> goldParse = goldDepParses.get(weights.indexOf(graph));
-			
-			accuracies[0] += ParserMain.evaluate(goldParse, result.kBest.get(0));
-			convRates[0] += 1;
-			avgIterations[0] += 1;
-			System.out.println("1 best = " + result.kBest.get(0));
-			
-			boolean hasDuplicates = false;
-			for (int i = 1; i < k; i++) {
-				if (result.iterations[i] == -1) {
-					System.err.println(i + " best does NOT converge");
-					continue;
-				}
-				
-				if (result.kBest.get(i).equals(result.kBest.get(i-1))) {
-					 hasDuplicates = true;
-				}
-				accuracies[i] += ParserMain.evaluate(goldParse, result.kBest.get(i));
-				convRates[i] += 1;
-				//System.err.println(i + " best converges in " + result.iterations[i] + " iterations\n");
-				avgIterations[i] += result.iterations[i];		
-				System.out.println(i+1 + " best = " + result.kBest.get(i));		
-			}
-			if (hasDuplicates) {
-				exWithDuplicates += 1.0;
-			}
-			System.out.println();
-			example += 1;
-			//break;
-		}
-		
-		System.out.println("% of duplicates = " + exWithDuplicates*100/example);
-		for (int i = 0; i < k; i++) {
-			System.out.println(i+1 + "\n-----------------\n");
-			System.out.println("avg accuracy = " + accuracies[i]/example);
-			System.out.println("convergence  = " + convRates[i]*100/example);
-			System.out.println("iterations   = " + avgIterations[i]/example);
-		}
-				
-	}*/
+    private final double HAMMING_WT;
 
+    public NoDD(double hammingWt) {
+        HAMMING_WT = hammingWt;
+    }
+
+    /** TEST!!! */
+    private double[][] updateWeights(List<Integer> sequence, double[][] weights) {
+
+        for (int child = 1; child <= sequence.size(); child++) {
+            int parent = sequence.get(child - 1);
+            weights[parent][child] -= HAMMING_WT;
+        }
+
+        return weights;
+    }
+
+    KBest<Integer> run(double[][] weights, int k) {
+        List<List<Integer>> sequences = new ArrayList<List<Integer>>();
+
+        double ithWeights[][] = new double[weights.length][weights[0].length];
+        for (int u = 0; u < weights.length; u++) {
+            for (int v = 0; v < weights[0].length; v++) {
+                ithWeights[u][v] = weights[u][v];
+            }
+        }
+
+        while (sequences.size() < k) {
+            // for (int i = 0; i < weights.length; i++) {
+            // for (int j = 0; j < weights[0].length; j++) {
+            // System.out.print(ithWeights[i][j] + " \t");
+            // }
+            // System.out.println();
+            // }
+            List<Integer> nextBestSeq = ParserDD.getTree(ithWeights);
+            // System.out.println(nextBestSeq + " " + sequences.size());
+            sequences.add(nextBestSeq);
+            ithWeights = updateWeights(nextBestSeq, ithWeights);
+        }
+        return new KBest<Integer>(sequences, new int[k]);
+    }
 }

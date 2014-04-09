@@ -7,7 +7,7 @@ import java.util.Map;
 import edu.cmu.cs.lti.ark.diversity.fst.AdditiveUniHamDistFst;
 import edu.cmu.cs.lti.ark.diversity.fst.Fst;
 import edu.cmu.cs.lti.ark.diversity.main.DdHelper;
-import edu.cmu.cs.lti.ark.diversity.main.DdResult;
+import edu.cmu.cs.lti.ark.diversity.main.KBest;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 import edu.cmu.cs.lti.ark.diversity.main.TestInstance;
 import edu.cmu.cs.lti.ark.diversity.main.Viterbi;
@@ -26,7 +26,7 @@ public class TaggerDD {
 		this.hmm = hmm;
 	}
 	
-	public DdResult<String> run(List<String> tokens, int k) {
+	public KBest<String> run(List<String> tokens, int k) {
 		final int n = tokens.size();
 		final TestInstance instance = new TestInstance(tokens, hmm, tagSet);
 				
@@ -82,6 +82,6 @@ public class TaggerDD {
 				break;
 			}
 		}
-		return new DdResult<String>(kBestTagSeqs, iterations);
+		return new KBest<String>(kBestTagSeqs, iterations);
 	}
 }

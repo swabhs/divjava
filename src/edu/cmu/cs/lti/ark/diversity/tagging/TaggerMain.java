@@ -3,7 +3,7 @@ package edu.cmu.cs.lti.ark.diversity.tagging;
 import java.util.List;
 import java.util.Map;
 
-import edu.cmu.cs.lti.ark.diversity.main.DdResult;
+import edu.cmu.cs.lti.ark.diversity.main.KBest;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
 import edu.cmu.cs.lti.ark.diversity.utils.Tuple;
@@ -56,7 +56,7 @@ public class TaggerMain {
 			System.out.println(sentence);
 			
 			TaggerDD taggerDD = new TaggerDD(tagSet, hmm);
-			DdResult<String> result = taggerDD.run(sentence, k);
+			KBest<String> result = taggerDD.run(sentence, k);
 			List<String> goldTagSeq = trueTagSeqs.get(example);
 			
 			accuracies[0] += evaluate(goldTagSeq, result.kBest.get(0));
