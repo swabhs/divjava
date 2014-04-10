@@ -43,8 +43,7 @@ public class ResultAnalyzer<T> {
 
         System.out.println("it" + (hammingWt * 1000) + "=c(" + Arrays.toString(avgIterations)
                 + ")\n");
-        // System.out.println("% examples containing duplicates:\n" + duplicates
-        // + "\n");
+        System.out.println("% examples containing duplicates:\n" + duplicates + "\n");
     }
 
     /** Finds the average of the actual size of the k-best list returned */

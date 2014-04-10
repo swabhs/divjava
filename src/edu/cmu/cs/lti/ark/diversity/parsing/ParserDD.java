@@ -6,8 +6,7 @@ import java.util.Map;
 
 import edu.cmu.cs.lti.ark.cle.ChuLiuEdmonds;
 import edu.cmu.cs.lti.ark.cle.Weighted;
-import edu.cmu.cs.lti.ark.diversity.fst.AdditiveUniHamDistFst;
-import edu.cmu.cs.lti.ark.diversity.fst.Fst;
+import edu.cmu.cs.lti.ark.diversity.fst.AdditiveUniHamDistHalfNHalfFst;
 import edu.cmu.cs.lti.ark.diversity.main.DdHelper;
 import edu.cmu.cs.lti.ark.diversity.main.KBest;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
@@ -15,7 +14,7 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 public class ParserDD {
 
     private static final int ROOT = 0;
-    private final double MAX_ITERATIONS = 200;
+    private final double MAX_ITERATIONS = 500;
 
     private final double HAMMING_WT;
     private final int K;
@@ -64,7 +63,7 @@ public class ParserDD {
         int n = weights[0].length - 1;
         TagSet<Integer> tagSet = createTagset(n + 1);
 
-        Fst<Integer, List<Integer>> fst = new AdditiveUniHamDistFst<Integer>(HAMMING_WT);
+        AdditiveUniHamDistHalfNHalfFst fst = new AdditiveUniHamDistHalfNHalfFst(HAMMING_WT);
         List<List<Integer>> kBestTrees = new ArrayList<List<Integer>>();
 
         int iterations[] = new int[K];
@@ -96,7 +95,7 @@ public class ParserDD {
             while (iterations[i] <= MAX_ITERATIONS) {
                 double stepSize = 1.0 / Math.sqrt(iterations[i]);
 
-                fstTree = fst.getSequence(kBestTrees, dd, tagSet).getSequence();
+                fstTree = fst.getSequence(kBestTrees, dd, tagSet, weights).getSequence();
                 cleTree = getTree(ithWeights);
 
                 // System.out.println(cleTree + " cle");

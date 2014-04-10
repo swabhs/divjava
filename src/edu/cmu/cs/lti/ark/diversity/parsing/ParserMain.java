@@ -3,6 +3,7 @@ package edu.cmu.cs.lti.ark.diversity.parsing;
 import java.util.ArrayList;
 import java.util.List;
 
+import edu.cmu.cs.lti.ark.diversity.main.HalfNHalfUtil;
 import edu.cmu.cs.lti.ark.diversity.main.KBest;
 import edu.cmu.cs.lti.ark.diversity.main.ResultAnalyzer;
 import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
@@ -32,11 +33,14 @@ public class ParserMain {
             System.err.print(example + "...");
             double[][] graph = edgeWeightsList.get(example);
 
+            HalfNHalfUtil.modifyGraph(graph); // only addition for half and half
+
             KBest<Integer> result = parserdd.run(graph);
             predictions.add(result);
             visitedExamples.add(example);
-            // break;
+
         }
+        System.out.println();
         return predictions;
     }
 
@@ -60,7 +64,7 @@ public class ParserMain {
 
     public static void main(String[] args) {
         List<double[][]> weights = DataReader.readEdgeWeights(weightsFileName);
-        double HAMMING_WT[] = new double[] { 0.5, 0.75, 1.0 };
+        double HAMMING_WT[] = new double[] { 0.1 };
 
         for (double hm : HAMMING_WT) {
             System.out.println("\n\nalpha = " + hm);
