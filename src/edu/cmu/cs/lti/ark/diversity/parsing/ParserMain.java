@@ -27,7 +27,7 @@ public class ParserMain {
         visitedExamples = new ArrayList<Integer>();
         for (int example = 0; example < edgeWeightsList.size(); example++) {
             if (example % 25 == 0) {
-                System.out.println();
+                System.err.println();
             }
             System.err.print(example + "...");
             double[][] graph = edgeWeightsList.get(example);
@@ -60,7 +60,7 @@ public class ParserMain {
 
     public static void main(String[] args) {
         List<double[][]> weights = DataReader.readEdgeWeights(weightsFileName);
-        double HAMMING_WT[] = new double[] { 0.5, 0.75, 1.0 };
+        double HAMMING_WT[] = new double[] { 0.1 };
 
         for (double hm : HAMMING_WT) {
             System.out.println("\n\nalpha = " + hm);

@@ -33,7 +33,7 @@ public class ResultAnalyzer<T> {
 
         System.out
                 .println("convrate" + (hammingWt * 1000) + "=c(" + Arrays.toString(trueK) + ")\n");
-        System.out.println("EffK" + (hammingWt * 1000) + "=c(" + Arrays.toString(effK) + ")\n");
+        System.out.println("effK" + (hammingWt * 1000) + "=c(" + Arrays.toString(effK) + ")\n");
 
         System.out.println("avgacc" + (hammingWt * 1000) + "=c(" + Arrays.toString(avgAcc) + ")\n");
         System.out.println("oracle" + (hammingWt * 1000) + "=c(" + Arrays.toString(oracleAcc)
