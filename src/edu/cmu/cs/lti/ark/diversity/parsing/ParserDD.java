@@ -103,7 +103,7 @@ public class ParserDD {
                 // System.out.println(fstTree + " fst");
                 if (helper.agree(cleTree, fstTree)) {
                     kBestTrees.add(cleTree);
-                    // System.out.println(cleTree);
+                    // System.out.println(i + " " + cleTree);
                     break;
                 } else {
                     dd = helper.update(dd, cleTree, fstTree, stepSize, tagSet);
@@ -113,6 +113,8 @@ public class ParserDD {
             }
             if (iterations[i] == MAX_ITERATIONS + 1) { // did not converge
                 iterations[i] = -1;
+                // Add the cle tree anyway!!
+                kBestTrees.add(cleTree);
             }
         }
         return new KBest<Integer>(kBestTrees, iterations);

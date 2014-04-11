@@ -32,6 +32,9 @@ public class ParserMain {
             System.err.print(example + "...");
             double[][] graph = edgeWeightsList.get(example);
 
+            if (graph.length > 10) {
+                continue;
+            }
             KBest<Integer> result = parserdd.run(graph);
             predictions.add(result);
             visitedExamples.add(example);
@@ -60,7 +63,7 @@ public class ParserMain {
 
     public static void main(String[] args) {
         List<double[][]> weights = DataReader.readEdgeWeights(weightsFileName);
-        double HAMMING_WT[] = new double[] { 0.1 };
+        double HAMMING_WT[] = new double[] { 0.5 };
 
         for (double hm : HAMMING_WT) {
             System.out.println("\n\nalpha = " + hm);
