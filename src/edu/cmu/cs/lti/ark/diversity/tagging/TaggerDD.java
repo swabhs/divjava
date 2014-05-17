@@ -66,7 +66,7 @@ public class TaggerDD {
 			while (iterations[i] <= maxIterations) {
 				double stepSize = 1.0 / Math.sqrt(iterations[i]);
 				
-				fstSeq = fst.getSequence(kBestTagSeqs, dd, tagSet).getSequence();
+				fstSeq = fst.getResult(kBestTagSeqs, dd, tagSet).getSequence();
 				viterbiSeq = viterbi.getTagSeq(instance, dd).getSequence();
 				
 				if (helper.agree(viterbiSeq, fstSeq)) {

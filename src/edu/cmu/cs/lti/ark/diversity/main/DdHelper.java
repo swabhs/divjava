@@ -53,6 +53,7 @@ public class DdHelper<T> {
         List<Map<T, Integer>> indi2 = computeIndicators(tags2, tagSet);
 
         List<T> allTags = tagSet.getTags();
+        // System.out.println("DD");
         // for (T tag : allTags)
         // System.out.print(tag + "\t");
         // System.out.println();

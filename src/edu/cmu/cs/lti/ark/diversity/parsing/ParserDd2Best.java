@@ -72,7 +72,7 @@ public class ParserDd2Best {
 		while (iter <= MAX_ITERATIONS) {
 			double stepSize = 1.0 / Math.sqrt(iter);
 						
-			tags2 = fst.getSequence(bestTree, dd, tagSet).getSequence();	
+			tags2 = fst.getResult(bestTree, dd, tagSet).getSequence();	
 			tags1 = getTree(weights);
 			
 			if (helper.agree(tags1, tags2)) {

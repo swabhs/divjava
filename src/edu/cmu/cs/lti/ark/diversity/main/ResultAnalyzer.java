@@ -27,22 +27,18 @@ public class ResultAnalyzer<T> {
         double effK[] = calculateEffectiveK(trueK);
         double avgAcc[] = calculateAverageAccuracy(trueK);
         double oracleAcc[] = calculateOracleAccuracy();
-        double genOracleAcc[] = calculateGenerousOracleAccuracy();
+        double genOrAcc[] = calculateGenerousOracleAccuracy();
         double avgIterations[] = calculateAverageIterations(trueK);
-        double duplicates = calculatePercentDuplicates();
 
-        System.out
-                .println("convrate" + (hammingWt * 1000) + "=c(" + Arrays.toString(trueK) + ")\n");
-        System.out.println("effK" + (hammingWt * 1000) + "=c(" + Arrays.toString(effK) + ")\n");
+        int round = (int) (hammingWt * 1000);
+        System.out.println("\nconvrate" + round + "=c(" + Arrays.toString(trueK) + ")\n");
+        System.out.println("effK" + round + arrayAsStr(effK));
+        System.out.println("avgacc" + round + arrayAsStr(avgAcc));
+        System.out.println("oracle" + round + arrayAsStr(oracleAcc));
+        System.out.println("genoracle" + round + arrayAsStr(genOrAcc));
+        System.out.println("it" + round + arrayAsStr(avgIterations));
 
-        System.out.println("avgacc" + (hammingWt * 1000) + "=c(" + Arrays.toString(avgAcc) + ")\n");
-        System.out.println("oracle" + (hammingWt * 1000) + "=c(" + Arrays.toString(oracleAcc)
-                + ")\n");
-        System.out.println("genoracle" + (hammingWt * 1000) + "=c(" + Arrays.toString(genOracleAcc)
-                + ")\n");
-
-        System.out.println("it" + (hammingWt * 1000) + "=c(" + Arrays.toString(avgIterations)
-                + ")\n");
+        // double duplicates = calculatePercentDuplicates();
         // System.out.println("% examples containing duplicates:\n" + duplicates
         // + "\n");
     }
@@ -54,7 +50,8 @@ public class ResultAnalyzer<T> {
             KBest<T> result = predictions.get(example);
 
             for (int i = 0; i < result.kBest.size(); i++) {
-                trueK[i] += 1;
+                if (result.iterations[i] != -1)
+                    trueK[i] += 1;
             }
         }
         return trueK;
@@ -72,7 +69,7 @@ public class ResultAnalyzer<T> {
             }
         }
         for (int i = 0; i < k; i++) {
-            accuracies[i] = Double.valueOf(df.format(accuracies[i] / trueK[i]));
+            accuracies[i] = Double.valueOf(df.format(accuracies[i] / trueK[0]));
         }
         return accuracies;
     }
@@ -101,15 +98,17 @@ public class ResultAnalyzer<T> {
         for (int example = 0; example < predictions.size(); example++) {
             KBest<T> result = predictions.get(example);
             for (int i = 0; i < result.kBest.size(); i++) {
-                avgIterations[i] += result.iterations[i];
+                if (result.iterations[i] != -1)
+                    avgIterations[i] += result.iterations[i];
             }
         }
         for (int i = 0; i < k; i++) {
-            avgIterations[i] = Double.valueOf(df.format(avgIterations[i] / trueK[i]));
+            avgIterations[i] = Double.valueOf(df.format(avgIterations[i] / trueK[0]));
         }
         return avgIterations;
     }
 
+    /** Calculates corpus average of the number of unique results seen at each k */
     public double[] calculateEffectiveK(int trueK[]) {
         double effK[] = new double[k];
 
@@ -118,19 +117,12 @@ public class ResultAnalyzer<T> {
 
             for (int i = 0; i < prediction.kBest.size(); i++) {
                 Set<List<T>> uniqueSeqs = new HashSet<List<T>>(prediction.kBest.subList(0, i + 1));
-                // System.out.print(uniqueSeqs.size() + "...");
-                // if (uniqueSeqs.size() == 2) {
-                // System.out.println(exampleNum + "size = " +
-                // prediction.kBest.get(0).size());
-                //
-                // }
                 effK[i] += uniqueSeqs.size();
             }
-            // System.out.println();
         }
 
         for (int i = 0; i < k; i++) {
-            effK[i] = Double.valueOf(df.format(effK[i] / trueK[i]));
+            effK[i] = Double.valueOf(df.format(effK[i] / trueK[0]));
             // Assuming each solution is of size k
         }
         return effK;
@@ -145,5 +137,14 @@ public class ResultAnalyzer<T> {
             }
         }
         return (100 * exWithDuplicates / predictions.size());
+    }
+
+    private String arrayAsStr(double arr[]) {
+        String str = "=c(";
+        for (int i = 0; i < arr.length - 1; i++) {
+            str += arr[i] + ", ";
+        }
+        str += arr[arr.length - 1] + ")\n";
+        return str;
     }
 }

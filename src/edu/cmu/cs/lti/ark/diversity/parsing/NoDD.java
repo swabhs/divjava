@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import edu.cmu.cs.lti.ark.diversity.main.KBest;
+import edu.cmu.cs.lti.ark.diversity.main.SequenceResult;
 
 public class NoDD {
 
@@ -13,14 +14,18 @@ public class NoDD {
         HAMMING_WT = hammingWt;
     }
 
+    double fstLikeScore = 0.0;
+
     /** TEST!!! */
-    private double[][] updateWeights(List<Integer> sequence, double[][] weights) {
-
-        for (int child = 1; child <= sequence.size(); child++) {
-            int parent = sequence.get(child - 1);
-            weights[parent][child] -= HAMMING_WT;
+    private double[][] updateWeights(List<List<Integer>> sequences, double[][] weights) {
+        fstLikeScore = 0.0;
+        for (int child = 1; child <= sequences.get(0).size(); child++) {
+            for (List<Integer> sequence : sequences) {
+                int parent = sequence.get(child - 1);
+                weights[parent][child] -= HAMMING_WT;
+                fstLikeScore -= HAMMING_WT;
+            }
         }
-
         return weights;
     }
 
@@ -35,16 +40,33 @@ public class NoDD {
         }
 
         while (sequences.size() < k) {
-            // for (int i = 0; i < weights.length; i++) {
-            // for (int j = 0; j < weights[0].length; j++) {
-            // System.out.print(ithWeights[i][j] + " \t");
+            SequenceResult<Integer> nextResult = CleCaller.getTree(ithWeights);
+            List<Integer> nextTree = nextResult.getSequence();
+            double cleScore = CleCaller.getTreeModelScore(weights, nextTree);
+            // System.out.println("weights");
+            // for (int v = 0; v < weights[0].length; v++) {
+            // for (int u = 0; u < weights.length; u++) {
+            // if (ithWeights[u][v] == Double.NEGATIVE_INFINITY) {
+            // System.out.print("-inft\t");
+            // } else {
+            // System.out.print(String.format("%.4g", ithWeights[u][v]) + "\t");
+            // }
             // }
             // System.out.println();
             // }
-            List<Integer> nextBestSeq = ParserDD.getTree(ithWeights);
-            // System.out.println(nextBestSeq + " " + sequences.size());
-            sequences.add(nextBestSeq);
-            ithWeights = updateWeights(nextBestSeq, ithWeights);
+            // System.out
+            // .println(sequences.size() + " " + nextTree + " "
+            // + String.format("%.4g", cleScore) + " fst = "
+            // + String.format("%.4g", fstLikeScore) + " total = "
+            // + String.format("%.4g", (fstLikeScore + cleScore)));
+            sequences.add(nextTree);
+            ithWeights = new double[weights.length][weights[0].length];
+            for (int u = 0; u < weights.length; u++) {
+                for (int v = 0; v < weights[0].length; v++) {
+                    ithWeights[u][v] = weights[u][v];
+                }
+            }
+            ithWeights = updateWeights(sequences, ithWeights);
         }
         return new KBest<Integer>(sequences, new int[k]);
     }
