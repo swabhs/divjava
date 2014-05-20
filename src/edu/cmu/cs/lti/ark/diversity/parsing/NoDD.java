@@ -43,22 +43,6 @@ public class NoDD {
             SequenceResult<Integer> nextResult = CleCaller.getTree(ithWeights);
             List<Integer> nextTree = nextResult.getSequence();
             double cleScore = CleCaller.getTreeModelScore(weights, nextTree);
-            // System.out.println("weights");
-            // for (int v = 0; v < weights[0].length; v++) {
-            // for (int u = 0; u < weights.length; u++) {
-            // if (ithWeights[u][v] == Double.NEGATIVE_INFINITY) {
-            // System.out.print("-inft\t");
-            // } else {
-            // System.out.print(String.format("%.4g", ithWeights[u][v]) + "\t");
-            // }
-            // }
-            // System.out.println();
-            // }
-            // System.out
-            // .println(sequences.size() + " " + nextTree + " "
-            // + String.format("%.4g", cleScore) + " fst = "
-            // + String.format("%.4g", fstLikeScore) + " total = "
-            // + String.format("%.4g", (fstLikeScore + cleScore)));
             sequences.add(nextTree);
             ithWeights = new double[weights.length][weights[0].length];
             for (int u = 0; u < weights.length; u++) {

@@ -9,16 +9,16 @@ import java.util.Set;
 public class ResultAnalyzer<T> {
 
     private List<KBest<T>> predictions;
-    private List<List<T>> goldParses;
+    private List<List<T>> gold;
 
     private int k;
 
     private Performance<T> performance = new Performance<T>();
     private DecimalFormat df = new DecimalFormat("#.##");
 
-    public ResultAnalyzer(List<KBest<T>> predictions, List<List<T>> goldParses, int k) {
+    public ResultAnalyzer(List<KBest<T>> predictions, List<List<T>> gold, int k) {
         this.predictions = predictions;
-        this.goldParses = goldParses;
+        this.gold = gold;
         this.k = k;
     }
 
@@ -46,7 +46,7 @@ public class ResultAnalyzer<T> {
     /** Finds the average of the actual size of the k-best list returned */
     private int[] calculateTrueK() {
         int trueK[] = new int[k];
-        for (int example = 0; example < goldParses.size(); example++) {
+        for (int example = 0; example < gold.size(); example++) {
             KBest<T> result = predictions.get(example);
 
             for (int i = 0; i < result.kBest.size(); i++) {
@@ -60,9 +60,9 @@ public class ResultAnalyzer<T> {
     private double[] calculateAverageAccuracy(int trueK[]) {
         double accuracies[] = new double[k];
 
-        for (int example = 0; example < goldParses.size(); example++) {
+        for (int example = 0; example < gold.size(); example++) {
             KBest<T> result = predictions.get(example);
-            List<T> goldParse = goldParses.get(example);
+            List<T> goldParse = gold.get(example);
 
             for (int i = 0; i < result.kBest.size(); i++) {
                 accuracies[i] += performance.evaluateAccuracy(goldParse, result.kBest.get(i));
@@ -78,7 +78,7 @@ public class ResultAnalyzer<T> {
         Oracle<T> oracle = new Oracle<T>();
         double oracleAcc[] = new double[k];
         for (int i = 0; i < k; i++) {
-            oracleAcc[i] = Double.valueOf(df.format(oracle.evaluate(goldParses, predictions, i)));
+            oracleAcc[i] = Double.valueOf(df.format(oracle.evaluate(gold, predictions, i)));
         }
         return oracleAcc;
     }
@@ -88,7 +88,7 @@ public class ResultAnalyzer<T> {
         double genAcc[] = new double[k];
         for (int i = 0; i < k; i++) {
             genAcc[i] = Double
-                    .valueOf(df.format(genOracle.evaluate(goldParses, predictions, i + 1)));
+                    .valueOf(df.format(genOracle.evaluate(gold, predictions, i + 1)));
         }
         return genAcc;
     }
