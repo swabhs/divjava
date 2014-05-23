@@ -8,8 +8,9 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
 public interface Fst<T, U> {
 
-    public SequenceResult<T> getResult(List<U> given, List<Map<T, Double>> dd, TagSet<T> tagSet);
+    public SequenceResult<T> getResult(
+            List<SequenceResult<T>> given, List<Map<T, Double>> dd, TagSet<T> tagSet);
 
-    public double getFstOnlyScore(List<T> sequence, List<List<T>> kBest);
+    public double getFstOnlyScore(SequenceResult<T> sequence, List<SequenceResult<T>> kBest);
 
 }

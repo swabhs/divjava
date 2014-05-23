@@ -13,21 +13,25 @@ public class Oracle<T> {
         // for every example, return the best accuracy till length k
         for (int example = 0; example < results.size(); example++) {
             KBest<T> result = results.get(example);
-            if (result.kBest.size() < K) {
-                continue;
-            }
             validExamples++;
 
-            double maxAcc = performance.evaluateAccuracy(gold.get(example), result.kBest.get(0));
+            double maxAcc = performance.evaluateAccuracy(
+                    gold.get(example), result.kBest.get(0).getSequence());
             for (int k = 1; k < K; k++) {
-                double acc = performance.evaluateAccuracy(gold.get(example), result.kBest.get(k));
+                List<T> prediction;
+                if (result.kBest.size() <= k) {
+                    prediction = result.kBest.get(result.kBest.size() - 1).getSequence();
+                    // continue;
+                } else {
+                    prediction = result.kBest.get(k).getSequence();
+                }
+                double acc = performance.evaluateAccuracy(gold.get(example), prediction);
                 if (acc > maxAcc) {
                     maxAcc = acc;
                 }
             }
             totAcc += maxAcc;
         }
-
         return totAcc / validExamples;
     }
 }

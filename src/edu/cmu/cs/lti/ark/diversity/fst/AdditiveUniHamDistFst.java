@@ -32,11 +32,11 @@ public class AdditiveUniHamDistFst<T> implements Fst<T, List<T>> {
     }
 
     /** Runs in O(ntk). TODO: add a test to check!!! */
-    private void run(List<List<T>> kBest, List<Map<T, Double>> dd, TagSet<T> tagSet) {
+    private void run(List<SequenceResult<T>> kBest, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         seq = new ArrayList<T>();
         seqScore = 0.0;
 
-        int sentSize = kBest.get(0).size();
+        int sentSize = kBest.get(0).getSequence().size();
         for (int i = 0; i < sentSize; i++) {
             double maxScore = NIN;
             T bestTag = null;
@@ -52,10 +52,10 @@ public class AdditiveUniHamDistFst<T> implements Fst<T, List<T>> {
         }
     }
 
-    private double getLocalScore(List<List<T>> kBest, T tag, int pos) {
+    private double getLocalScore(List<SequenceResult<T>> kBest, T tag, int pos) {
         double score = 0.0;
-        for (List<T> best : kBest) {
-            if (tag.equals(best.get(pos))) {
+        for (SequenceResult<T> best : kBest) {
+            if (tag.equals(best.getSequence().get(pos))) {
                 score -= hammingWeight;
             }
         }
@@ -63,15 +63,15 @@ public class AdditiveUniHamDistFst<T> implements Fst<T, List<T>> {
     }
 
     public SequenceResult<T> getResult(
-            List<List<T>> kBest, List<Map<T, Double>> dd, TagSet<T> tagSet) {
+            List<SequenceResult<T>> kBest, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         run(kBest, dd, tagSet);
         return new SequenceResult<T>(seq, seqScore);
     }
 
-    public double getFstOnlyScore(List<T> sequence, List<List<T>> kBest) {
+    public double getFstOnlyScore(SequenceResult<T> sequence, List<SequenceResult<T>> kBest) {
         double fstScore = 0.0;
-        for (int pos = 0; pos < sequence.size(); pos++) {
-            fstScore += getLocalScore(kBest, sequence.get(pos), pos);
+        for (int pos = 0; pos < sequence.getSequence().size(); pos++) {
+            fstScore += getLocalScore(kBest, sequence.getSequence().get(pos), pos);
         }
         return fstScore;
     }

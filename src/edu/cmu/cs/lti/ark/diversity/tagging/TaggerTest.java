@@ -16,7 +16,7 @@ import edu.cmu.cs.lti.ark.diversity.main.SequenceResult;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
 
-public class ViterbiTest {
+public class TaggerTest {
 
     private static final double DELTA = 0.0001;
     private static final TagSet<String> tagSet = new TagSet<String>(
@@ -81,8 +81,14 @@ public class ViterbiTest {
         int k = 10;
         TaggerDD taggerDD = new TaggerDD(tagSet, hmm);
         KBest<String> result = taggerDD.run(sentence, k);
-        for (List<String> kthBest : result.kBest) {
+        for (SequenceResult<String> kthBest : result.kBest) {
             System.out.println(kthBest);
         }
+    }
+
+    @Test
+    public void testCostAugmentedTagger() {
+        CostAugmentedTagger tagger = new CostAugmentedTagger(0.1, tagSet, hmm);
+        KBest<String> kbest = tagger.run(Lists.newArrayList("I", "love", "rain"), 5);
     }
 }

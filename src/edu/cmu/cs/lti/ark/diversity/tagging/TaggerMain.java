@@ -59,7 +59,7 @@ public class TaggerMain {
             KBest<String> result = taggerDD.run(sentence, k);
             List<String> goldTagSeq = trueTagSeqs.get(example);
 
-            accuracies[0] += evaluate(goldTagSeq, result.kBest.get(0));
+            accuracies[0] += evaluate(goldTagSeq, result.kBest.get(0).getSequence());
             convRates[0] += 1;
             avgIterations[0] += 1;
             System.out.println("1 best = " + result.kBest.get(0));
@@ -74,7 +74,7 @@ public class TaggerMain {
                 if (result.kBest.get(i).equals(result.kBest.get(i - 1))) {
                     hasDuplicates = true;
                 }
-                accuracies[i] += evaluate(goldTagSeq, result.kBest.get(i));
+                accuracies[i] += evaluate(goldTagSeq, result.kBest.get(i).getSequence());
                 convRates[i] += 1;
                 // System.err.println(i + " best converges in " +
                 // result.iterations[i] + " iterations\n");

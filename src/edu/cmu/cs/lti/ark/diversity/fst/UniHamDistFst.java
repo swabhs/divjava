@@ -28,17 +28,17 @@ public class UniHamDistFst<T> implements Fst<T, T> {
     }
 
     /** Runs in O(nt) */
-    private double run(List<T> bestSeq, List<Map<T, Double>> dd, TagSet<T> tagSet) {
+    private double run(SequenceResult<T> bestSeq, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         init();
         double maxScore = NIN;
 
-        int n = bestSeq.size();
+        int n = bestSeq.getSequence().size();
         for (int i = 0; i < n; i++) {
             maxScore = NIN;
             T bestTag = null;
             List<T> allTags = tagSet.getTags();
             for (T label : allTags) {
-                double localScore = getLocalScore(label, bestSeq.get(i));
+                double localScore = getLocalScore(label, bestSeq.getSequence().get(i));
                 double score = localScore + dd.get(i).get(label);
                 if (score > maxScore) {
                     maxScore = score;
@@ -59,15 +59,24 @@ public class UniHamDistFst<T> implements Fst<T, T> {
         }
     }
 
-    public SequenceResult<T> getResult(List<T> given, List<Map<T, Double>> dd, TagSet<T> tagSet) {
+    public SequenceResult<T> getResult(
+            SequenceResult<T> given, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         double score = run(given, dd, tagSet);
         return new SequenceResult<T>(bp, score);
     }
 
     @Override
-    public double getFstOnlyScore(List<T> sequence, List<List<T>> kBest) {
+    public double getFstOnlyScore(
+            SequenceResult<T> sequence, List<SequenceResult<T>> kBest) {
         // TODO Auto-generated method stub
         return 0;
+    }
+
+    @Override
+    public SequenceResult<T> getResult(List<SequenceResult<T>> given, List<Map<T, Double>> dd,
+            TagSet<T> tagSet) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

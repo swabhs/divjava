@@ -3,49 +3,80 @@ package edu.cmu.cs.lti.ark.diversity.parsing;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.google.common.collect.Lists;
+
 import edu.cmu.cs.lti.ark.diversity.main.KBest;
 import edu.cmu.cs.lti.ark.diversity.main.ResultAnalyzer;
+import edu.cmu.cs.lti.ark.diversity.utils.Conll;
+import edu.cmu.cs.lti.ark.diversity.utils.Conll.ConllElement;
 import edu.cmu.cs.lti.ark.diversity.utils.DataReader;
+import edu.cmu.cs.lti.ark.diversity.utils.FileUtils;
 
 public class ParserMain {
-
-    private static String weightsFileName = "data/dev_edges.weights";
-    private static String depsFileName = "data/dev.deps";
-    // private static String depsFileName = "data/turbo_basic_dev.pred";
+    private static String conllFileName = "data/parsing/ptb.dev.conll";
+    private static String weightsFileName = "data/parsing/ptb.dev.wts";
+    private static String labelsFileName = "data/parsing/ptb.dev.labels";
 
     // runtime options
-    private static final int K = 100;
-    // private static final double HAMMING_WT = 0.1;
-    private static final double initialDDStepSize = 0.1; // should be less
-                                                         // than
-                                                         // HAMMING_WT
-    private static final int maxDDIterations = 200;
+    private static final int K = 500;
+    private static final double hammingWt[] = new double[]{
+            0.00075, 0.005, 0.0075, 0.010, 0.02};
+    // 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.0};
+    private static final double initialDdStepSize = 0.05; // value <= hammingWt
+    private static final int maxDdIterations = 200;
     private static boolean useParseAnyway = true;
-    private static boolean useDD = true;
+    private static boolean useDD = false;
+    private static boolean useCamerini = true;
 
     // TODO: this is stupid, better way?
     private static List<Integer> visitedExamples;
 
-    /** Runs DD-based Diverse Parsing */
-    static List<KBest<Integer>> ddMain(List<double[][]> edgeWeightsList, double HAMMING_WT) {
-        List<KBest<Integer>> predictions = new ArrayList<KBest<Integer>>();
+    public static void main(String[] args) {
+        List<double[][]> allWeights = DataReader.readEdgeWeights(weightsFileName);
+        List<String[][]> labels = DataReader.readEdgeLabels(labelsFileName);
+        List<Conll> conlls = FileUtils.readConllFile(conllFileName);
+        assert conlls.size() == labels.size();
 
-        ParserDD parserdd = new ParserDD(HAMMING_WT, K, initialDDStepSize, useParseAnyway,
-                maxDDIterations);
+        for (double hm : hammingWt) {
+            List<KBest<Integer>> predictions;
+            if (useCamerini) {
+                predictions = exactKBest(allWeights);
+            } else {
+                if (useDD) {
+                    predictions = runDdParser(allWeights, hm);
+                } else {
+                    predictions = runCostAugParser(allWeights, hm);
+                }
+            }
+            // assert predictions.size() == conlls.size();
 
-        visitedExamples = new ArrayList<Integer>();
-
-        for (int example = 0; example < edgeWeightsList.size(); example++) {
-            if (example % 1 == 0) {
-                System.err.print(example + "...");
+            List<List<Integer>> allGold = getGoldTrees(conlls);
+            List<List<Integer>> visitedGold = new ArrayList<List<Integer>>();
+            for (int example : visitedExamples) {
+                visitedGold.add(allGold.get(example));
             }
 
-            double[][] graph = edgeWeightsList.get(example);
-            // if (graph.length != 7) {
-            // continue;
-            // }
+            ResultAnalyzer<Integer> analyzer =
+                    new ResultAnalyzer<Integer>(predictions, visitedGold, K);
+            analyzer.analyze(hm);
+            if (useCamerini)
+                break; // no need to loop over all hammingWt
+        }
+        // DataWriter.prepareConll(predictions, conlls, labels, K);
+    }
 
-            KBest<Integer> result = parserdd.runDualDecomposition(graph);
+    /** Runs DD-based Diverse Parsing */
+    static List<KBest<Integer>> runDdParser(List<double[][]> allWeights, double hammingWt) {
+        List<KBest<Integer>> predictions = new ArrayList<KBest<Integer>>();
+        DdParser parser = new DdParser(
+                hammingWt, K, initialDdStepSize, useParseAnyway, maxDdIterations);
+
+        visitedExamples = new ArrayList<Integer>();
+        for (int example = 0; example < allWeights.size(); example++) {
+            if (example % 1 == 0)
+                System.err.print(example + "...");
+
+            KBest<Integer> result = parser.runDualDecomposition(allWeights.get(example));
             predictions.add(result);
             visitedExamples.add(example);
             // break;
@@ -54,57 +85,51 @@ public class ParserMain {
         return predictions;
     }
 
-    /** Runs diverse parsing using only CLE */
-    static List<KBest<Integer>> ddLessMain(List<double[][]> edgeWeightsList,
-            double HAMMING_WT) {
-        List<KBest<Integer>> predictions = new ArrayList<KBest<Integer>>();
-        NoDD noDD = new NoDD(HAMMING_WT);
-
+    /** Runs diverse parsing using a cost-augmented CLE */
+    static List<KBest<Integer>> runCostAugParser(List<double[][]> allWeights, double hammingWt) {
+        List<KBest<Integer>> predictions = Lists.newArrayList();
+        CostAugmentedParser parser = new CostAugmentedParser(hammingWt);
+        System.err.println("Cost-augmented: alpha = " + hammingWt);
         visitedExamples = new ArrayList<Integer>();
-        System.err.println("alpha = " + HAMMING_WT);
-        for (int example = 0; example < edgeWeightsList.size(); example++) {
-            double[][] weights = edgeWeightsList.get(example);
 
-            if (example % 1 == 0) {
+        for (int example = 0; example < allWeights.size(); example++) {
+            if (example % 100 == 0)
                 System.err.print(example + "...");
-            }
-            // if (weights.length != 7) {
-            // continue;
-            // }
 
-            KBest<Integer> kDivBest = noDD.run(weights, K);
+            KBest<Integer> kDivBest = parser.run(allWeights.get(example), K);
             predictions.add(kDivBest);
             visitedExamples.add(example);
-            // break;
         }
         return predictions;
     }
 
-    public static void main(String[] args) {
-        List<double[][]> weights = DataReader.readEdgeWeights(weightsFileName);
-        double HAMMING_WT[] = new double[]{1.0};
-        // {0.0, 0.025, 0.05, 0.075, 0.1, 0.25, 0.5, 0.75, 1.0, 2.0};
+    /** Get exact k-best parses using (Camerini et.al. 1980) */
+    static List<KBest<Integer>> exactKBest(List<double[][]> allWeights) {
+        System.err.println("Running Camerini Baseline");
+        List<KBest<Integer>> predictions = Lists.newArrayList();
 
-        for (double hm : HAMMING_WT) {
-            System.out.println("\n\nalpha = " + hm);
-
-            List<KBest<Integer>> predictions;
-            if (useDD) {
-                predictions = ddMain(weights, hm);
-            } else {
-                predictions = ddLessMain(weights, hm);
+        visitedExamples = Lists.newArrayList();
+        for (int example = 0; example < allWeights.size(); example++) {
+            if (example % 100 == 0) {
+                System.err.print(example + "...");
             }
-
-            List<List<Integer>> allGold = DataReader.readDepParse(depsFileName);
-            List<List<Integer>> visitedGold = new ArrayList<List<Integer>>();
-
-            for (int example : visitedExamples) {
-                visitedGold.add(allGold.get(example));
-            }
-
-            ResultAnalyzer<Integer> analyzer =
-                    new ResultAnalyzer<Integer>(predictions, visitedGold, K);
-            analyzer.analyze(hm);
+            predictions.add(CleCaller.getKBestTrees(allWeights.get(example), K));
+            visitedExamples.add(example);
         }
+        System.err.println("\nDone!");
+        return predictions;
+    }
+
+    /** Given a list of Conll objects, returns the gold standard trees */
+    static List<List<Integer>> getGoldTrees(List<Conll> inputs) {
+        List<List<Integer>> goldTrees = Lists.newArrayList();
+        for (Conll input : inputs) {
+            List<Integer> goldTree = Lists.newArrayList();
+            for (ConllElement element : input.getElements()) {
+                goldTree.add(element.getGoldParent());
+            }
+            goldTrees.add(goldTree);
+        }
+        return goldTrees;
     }
 }

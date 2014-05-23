@@ -4,12 +4,12 @@ import java.util.List;
 
 public class KBest<T> {
 
-	public List<List<T>> kBest;		
-	public int[] iterations;
-	
-	public KBest(List<List<T>> kBest, int[] iterations) {
-		this.kBest = kBest;
-		this.iterations = iterations;
-	}
+    public List<SequenceResult<T>> kBest;
+    public int[] iterations;
+
+    public KBest(List<SequenceResult<T>> kBest, int[] iterations) {
+        this.kBest = kBest;
+        this.iterations = iterations;
+    }
 
 }

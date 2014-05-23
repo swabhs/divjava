@@ -9,6 +9,13 @@ import java.util.Map;
 import edu.cmu.cs.lti.ark.diversity.main.SequenceResult;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
+/**
+ * All sorts of problems - no abstract interface! TODO TODO!!!
+ * 
+ * @author sswayamd
+ * 
+ * @param <T>
+ */
 public class BiHamDistFst<T> implements Fst<T, T> {
 
     private final double nin = Double.NEGATIVE_INFINITY;
@@ -69,8 +76,7 @@ public class BiHamDistFst<T> implements Fst<T, T> {
                 ? -hammingWeight : 0.0;
     }
 
-    @Override
-    public SequenceResult<T> getResult(List<T> given, List<Map<T, Double>> dd, TagSet<T> tagSet) {
+    public SequenceResult<T> getResultOld(List<T> given, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         run(given, dd, tagSet);
         List<T> tagSeq = new ArrayList<T>();
 
@@ -94,8 +100,20 @@ public class BiHamDistFst<T> implements Fst<T, T> {
         return new SequenceResult<T>(tagSeq, maxScore);
     }
 
+    public double getFstOnlyScoreOld(List<T> sequence, List<List<T>> kBest) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
     @Override
-    public double getFstOnlyScore(List<T> sequence, List<List<T>> kBest) {
+    public SequenceResult<T> getResult(List<SequenceResult<T>> given, List<Map<T, Double>> dd,
+            TagSet<T> tagSet) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public double getFstOnlyScore(SequenceResult<T> sequence, List<SequenceResult<T>> kBest) {
         // TODO Auto-generated method stub
         return 0;
     }

@@ -14,7 +14,7 @@ public class ResultAnalyzer<T> {
     private int k;
 
     private Performance<T> performance = new Performance<T>();
-    private DecimalFormat df = new DecimalFormat("#.##");
+    private DecimalFormat df = new DecimalFormat("#.####");
 
     public ResultAnalyzer(List<KBest<T>> predictions, List<List<T>> gold, int k) {
         this.predictions = predictions;
@@ -65,7 +65,8 @@ public class ResultAnalyzer<T> {
             List<T> goldParse = gold.get(example);
 
             for (int i = 0; i < result.kBest.size(); i++) {
-                accuracies[i] += performance.evaluateAccuracy(goldParse, result.kBest.get(i));
+                accuracies[i] += performance.evaluateAccuracy(
+                        goldParse, result.kBest.get(i).getSequence());
             }
         }
         for (int i = 0; i < k; i++) {
@@ -116,7 +117,8 @@ public class ResultAnalyzer<T> {
             KBest<T> prediction = predictions.get(exampleNum);
 
             for (int i = 0; i < prediction.kBest.size(); i++) {
-                Set<List<T>> uniqueSeqs = new HashSet<List<T>>(prediction.kBest.subList(0, i + 1));
+                Set<SequenceResult<T>> uniqueSeqs = new HashSet<SequenceResult<T>>(
+                        prediction.kBest.subList(0, i + 1));
                 effK[i] += uniqueSeqs.size();
             }
         }
@@ -131,7 +133,8 @@ public class ResultAnalyzer<T> {
     private int calculatePercentDuplicates() {
         int exWithDuplicates = 0;
         for (int example = 0; example < predictions.size(); example++) {
-            Set<List<T>> uniqueSeqs = new HashSet<List<T>>(predictions.get(example).kBest);
+            Set<SequenceResult<T>> uniqueSeqs = new HashSet<SequenceResult<T>>(
+                    predictions.get(example).kBest);
             if (uniqueSeqs.size() != k) {
                 exWithDuplicates += 1;
             }

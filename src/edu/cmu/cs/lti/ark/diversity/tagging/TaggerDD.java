@@ -1,13 +1,15 @@
 package edu.cmu.cs.lti.ark.diversity.tagging;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import com.google.common.collect.Lists;
 
 import edu.cmu.cs.lti.ark.diversity.fst.AdditiveUniHamDistFst;
 import edu.cmu.cs.lti.ark.diversity.fst.Fst;
 import edu.cmu.cs.lti.ark.diversity.main.DdHelper;
 import edu.cmu.cs.lti.ark.diversity.main.KBest;
+import edu.cmu.cs.lti.ark.diversity.main.SequenceResult;
 import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
 public class TaggerDD {
@@ -31,14 +33,14 @@ public class TaggerDD {
         Viterbi viterbi = new Viterbi(tagSet, hmm);
 
         Fst<String, List<String>> fst = new AdditiveUniHamDistFst<String>(hammingWt);
-        List<List<String>> kBestTagSeqs = new ArrayList<List<String>>();
-        List<String> bestTags = viterbi.getTagSeq(instance, null).getSequence();
+        List<SequenceResult<String>> kBestTagSeqs = Lists.newArrayList();
+        SequenceResult<String> bestTags = viterbi.getTagSeq(instance, null);
         kBestTagSeqs.add(bestTags);
 
         int iterations[] = new int[k];
 
         for (int i = 1; i < k; i++) {
-            List<String> viterbiSeq = null;
+            SequenceResult<String> viterbiSeq = null;
             List<String> fstSeq = null;
             List<Map<String, Double>> dd = helper.init(n, tagSet);
 
@@ -47,13 +49,13 @@ public class TaggerDD {
                 double stepSize = 1.0 / Math.sqrt(iterations[i]);
 
                 fstSeq = fst.getResult(kBestTagSeqs, dd, tagSet).getSequence();
-                viterbiSeq = viterbi.getTagSeq(instance, dd).getSequence();
+                viterbiSeq = viterbi.getTagSeq(instance, dd);
 
-                if (helper.agree(viterbiSeq, fstSeq)) {
+                if (helper.agree(viterbiSeq.getSequence(), fstSeq)) {
                     kBestTagSeqs.add(viterbiSeq);
                     break;
                 } else {
-                    dd = helper.update(dd, viterbiSeq, fstSeq, stepSize, tagSet);
+                    dd = helper.update(dd, viterbiSeq.getSequence(), fstSeq, stepSize, tagSet);
                 }
                 iterations[i] += 1;
             }

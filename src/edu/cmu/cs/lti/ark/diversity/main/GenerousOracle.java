@@ -31,11 +31,12 @@ public class GenerousOracle<T> {
             }
             validExamples++;
 
-            int n = result.kBest.get(0).size();
+            int n = result.kBest.get(0).getSequence().size();
             seen = new boolean[n];
 
             for (int k = 0; k < K; k++) {
-                checkPosition(gold.get(exampleNum), results.get(exampleNum).kBest.get(k));
+                checkPosition(gold.get(exampleNum), results.get(exampleNum).kBest.get(k)
+                        .getSequence());
             }
             double acc = 0.0;
             for (int j = 0; j < n; j++) {
