@@ -9,7 +9,7 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
 
 /**
  * For each position find a tag which has the maximum score(dd + fst) for that
- * position. Does not include any bigram scoring.
+ * position. Does not have to be a tree.
  * 
  * @author sswayamd
  * 
@@ -31,7 +31,7 @@ public class AdditiveUniHamDistFst<T> implements Fst<T, List<T>> {
         this.hammingWeight = hammingWeight;
     }
 
-    /** Runs in O(ntk). TODO: add a test to check!!! */
+    /** Runs in O(ntk). */
     private void run(List<SequenceResult<T>> kBest, List<Map<T, Double>> dd, TagSet<T> tagSet) {
         seq = new ArrayList<T>();
         seqScore = 0.0;

@@ -25,7 +25,7 @@ public class CleCaller {
             tree.add(value.get(child));
         }
         // double cleScore = result.weight; // contains DD weights
-        return new SequenceResult<Integer>(tree, getTreeModelScore(weights, tree));
+        return new SequenceResult<Integer>(tree, result.weight);
     }
 
     /**
@@ -52,7 +52,9 @@ public class CleCaller {
         int iterations[] = new int[k];
         List<Weighted<Map<Integer, Integer>>> weightedSpanningTrees =
                 ChuLiuEdmonds.getKBestSpanningTrees(weights, 0, k);
-        assert weightedSpanningTrees.size() == k;
+        if (weightedSpanningTrees.size() < k) {
+            System.err.println("not enough solutions");
+        }
         for (Weighted<Map<Integer, Integer>> weightedSpanningTree : weightedSpanningTrees) {
             Map<Integer, Integer> value = weightedSpanningTree.val;
             List<Integer> tree = new ArrayList<Integer>();

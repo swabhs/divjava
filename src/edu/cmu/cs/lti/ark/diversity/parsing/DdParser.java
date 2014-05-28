@@ -19,7 +19,7 @@ public class DdParser {
     private final double HAMMING_WT;
     private final int K;
     private final double INITIAL_STEP;
-    private final double MAX_ITERATIONS;
+    private final int MAX_ITERATIONS;
     private final boolean USE_PARSE_ANYWYAY;
 
     private DdHelper<Integer> helper = new DdHelper<Integer>();
@@ -91,10 +91,7 @@ public class DdParser {
             // enough to handle this
             if (i == 0) {
                 cleResult = CleCaller.getBestTree(ithWeights);
-                List<Integer> bestTree = cleResult.getSequence();
                 kBestTrees.add(cleResult);
-                // System.out.println(i + " " + bestTree + "\nmodelscore = " +
-                // cleResult.getScore());
                 iterations[0] = 1;
                 continue;
             }
@@ -114,23 +111,13 @@ public class DdParser {
                 // System.out.println(fstTree + " fst");
 
                 if (helper.agree(cleTree, fstTree)) {
-
-                    // System.out.println("\n" + i + " " + cleTree);
-                    // System.out.println("ddscore    = " +
-                    // String.format("%.4g", ddscore) + " cle = "
-                    // +
-                    // String.format("%.4g", cleResult.getScore())
-                    // + " fst = " + String.format("%.4g",
-                    // fstResult.getScore()));
-                    // System.out.println("modelScore = " +
-                    // String.format("%.4g", modelonlyscore) +
-                    // " cle = " + String.format("%.4g", cleOnlyScore)
-                    // + " fst = " + String.format("%.4g", fstOnlyScore));
                     double ddscore = fstResult.getScore() + cleResult.getScore();
                     double fstOnlyScore = fst.getFstOnlyScore(fstResult, kBestTrees);
                     double cleOnlyScore = CleCaller.getTreeModelScore(weights, cleTree);
                     double modelonlyscore = fstOnlyScore + cleOnlyScore;
-                    if (Math.abs(ddscore - modelonlyscore) > 0.1) {
+                    System.err.println(ddscore + " " + modelonlyscore);
+                    if (Math.abs(ddscore - modelonlyscore) > 0.01) {
+                        System.out.println(ddscore + " " + modelonlyscore);
                         System.err.println("BUG in dual decomposition - reparametrization wrong");
                         System.exit(0);
                     }

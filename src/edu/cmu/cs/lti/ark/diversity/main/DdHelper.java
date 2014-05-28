@@ -27,7 +27,7 @@ public class DdHelper<T> {
     }
 
     /** Is this required? **/
-    public List<Map<T, Integer>> computeIndicators(List<T> tagSequence, TagSet<T> tagSet) {
+    private List<Map<T, Integer>> computeIndicators(List<T> tagSequence, TagSet<T> tagSet) {
         List<Map<T, Integer>> ind = new ArrayList<Map<T, Integer>>();
         for (int i = 0; i < tagSequence.size(); i++) {
             Map<T, Integer> map = new HashMap<T, Integer>();
@@ -72,10 +72,7 @@ public class DdHelper<T> {
 
     // TODO : make more efficient ??
     public boolean agree(List<T> tags1, List<T> tags2) {
-        if (tags1.size() != tags2.size()) {
-            System.err.println("Error: Tag sequences from slaves not of the same size!");
-            return false;
-        }
+        assert (tags1.size() == tags2.size()) : "Error: Tag sequences from slaves not of the same size!";
         for (int i = 0; i < tags1.size(); i++) {
             if (tags1.get(i) != tags2.get(i)) {
                 return false;

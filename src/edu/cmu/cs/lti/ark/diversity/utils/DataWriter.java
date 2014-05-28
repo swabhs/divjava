@@ -1,5 +1,6 @@
 package edu.cmu.cs.lti.ark.diversity.utils;
 
+import java.io.File;
 import java.util.List;
 
 import com.google.common.collect.Lists;
@@ -18,7 +19,16 @@ import edu.cmu.cs.lti.ark.diversity.utils.Conll.ConllElement;
 public class DataWriter {
 
     public static void prepareConll(
-            List<KBest<Integer>> predictions, List<Conll> inputs, List<String[][]> labels, int k) {
+            List<KBest<Integer>> predictions,
+            List<Conll> inputs,
+            List<String[][]> labels,
+            int k,
+            String outDirectory) {
+        File outDir = new File(outDirectory);
+        boolean created = false;
+        if (!outDir.exists()) {
+            created = outDir.mkdir();
+        }
         for (int j = 0; j < k; j++) {
             List<Conll> outputs = Lists.newArrayList();
             for (int dataItem = 0; dataItem < predictions.size(); dataItem++) {
@@ -45,9 +55,9 @@ public class DataWriter {
                 }
                 outputs.add(input);
             }
-            FileUtils.writeConll(outputs, "data/parsing/out/" + (j + 1) + "thBest.conll");
+            if (created) {
+                FileUtils.writeConll(outputs, outDirectory + (j + 1) + "thBest.conll");
+            }
         }
-
     }
-
 }

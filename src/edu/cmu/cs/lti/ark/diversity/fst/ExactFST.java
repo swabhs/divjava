@@ -13,9 +13,9 @@ import edu.cmu.cs.lti.ark.diversity.main.TagSet;
  * @author sswayamd
  *
  */
-public class ExactFST<T> {
+public class ExactFst<T> {
 
-	public ExactFST() {
+	public ExactFst() {
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -90,7 +90,7 @@ public class ExactFST<T> {
 	}
 	
 	public static void main(String[] args) {
-		ExactFST<String> fst = new ExactFST<String>();
+		ExactFst<String> fst = new ExactFst<String>();
 		Map<String, Double> map = new HashMap<String, Double>();
 		map.put("a", 0.0);
 		map.put("b", 0.0);

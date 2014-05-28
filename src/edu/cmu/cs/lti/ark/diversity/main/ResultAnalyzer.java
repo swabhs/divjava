@@ -6,11 +6,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class ResultAnalyzer<T> {
+import com.google.common.collect.Sets;
 
+import edu.cmu.cs.lti.ark.diversity.utils.Conll;
+import edu.cmu.cs.lti.ark.diversity.utils.Conll.ConllElement;
+
+public class ResultAnalyzer<T> {
     private List<KBest<T>> predictions;
     private List<List<T>> gold;
-
     private int k;
 
     private Performance<T> performance = new Performance<T>();
@@ -22,16 +25,17 @@ public class ResultAnalyzer<T> {
         this.k = k;
     }
 
-    public void analyze(double hammingWt) {
+    public double analyze(double hammingWt) {
         int trueK[] = calculateTrueK();
-        double effK[] = calculateEffectiveK(trueK);
+        double effK[] = calculateEffectiveK();
         double avgAcc[] = calculateAverageAccuracy(trueK);
         double oracleAcc[] = calculateOracleAccuracy();
         double genOrAcc[] = calculateGenerousOracleAccuracy();
         double avgIterations[] = calculateAverageIterations(trueK);
 
         int round = (int) (hammingWt * 1000);
-        System.out.println("\nconvrate" + round + "=c(" + Arrays.toString(trueK) + ")\n");
+        System.out.println("\nconv" + round + "=c(" + Arrays.toString(trueK)
+                + ")\n");
         System.out.println("effK" + round + arrayAsStr(effK));
         System.out.println("avgacc" + round + arrayAsStr(avgAcc));
         System.out.println("oracle" + round + arrayAsStr(oracleAcc));
@@ -41,6 +45,7 @@ public class ResultAnalyzer<T> {
         // double duplicates = calculatePercentDuplicates();
         // System.out.println("% examples containing duplicates:\n" + duplicates
         // + "\n");
+        return oracleAcc[oracleAcc.length - 1];
     }
 
     /** Finds the average of the actual size of the k-best list returned */
@@ -55,6 +60,31 @@ public class ResultAnalyzer<T> {
             }
         }
         return trueK;
+    }
+
+    /** Calculates corpus average of the number of unique results seen at each k */
+    public double[] calculateEffectiveK() {
+        double effK[] = new double[k];
+
+        for (int exampleNum = 0; exampleNum < predictions.size(); exampleNum++) {
+            KBest<T> prediction = predictions.get(exampleNum);
+
+            for (int i = 0; i < k; i++) {
+                Set<SequenceResult<T>> uniqueSeqs = Sets.newHashSet();
+                if (predictions.get(exampleNum).kBest.size() < i + 1) {
+                    uniqueSeqs.addAll(predictions.get(exampleNum).kBest);
+                } else {
+                    uniqueSeqs.addAll(prediction.kBest.subList(0, i + 1));
+                }
+                effK[i] += uniqueSeqs.size();
+            }
+        }
+
+        for (int i = 0; i < k; i++) {
+            effK[i] = Double.valueOf(df.format(effK[i] / gold.size()));
+            // Assuming each solution is of size k
+        }
+        return effK;
     }
 
     private double[] calculateAverageAccuracy(int trueK[]) {
@@ -109,27 +139,6 @@ public class ResultAnalyzer<T> {
         return avgIterations;
     }
 
-    /** Calculates corpus average of the number of unique results seen at each k */
-    public double[] calculateEffectiveK(int trueK[]) {
-        double effK[] = new double[k];
-
-        for (int exampleNum = 0; exampleNum < predictions.size(); exampleNum++) {
-            KBest<T> prediction = predictions.get(exampleNum);
-
-            for (int i = 0; i < prediction.kBest.size(); i++) {
-                Set<SequenceResult<T>> uniqueSeqs = new HashSet<SequenceResult<T>>(
-                        prediction.kBest.subList(0, i + 1));
-                effK[i] += uniqueSeqs.size();
-            }
-        }
-
-        for (int i = 0; i < k; i++) {
-            effK[i] = Double.valueOf(df.format(effK[i] / trueK[0]));
-            // Assuming each solution is of size k
-        }
-        return effK;
-    }
-
     private int calculatePercentDuplicates() {
         int exWithDuplicates = 0;
         for (int example = 0; example < predictions.size(); example++) {
@@ -149,5 +158,51 @@ public class ResultAnalyzer<T> {
         }
         str += arr[arr.length - 1] + ")\n";
         return str;
+    }
+
+    /** Check for PP-attachment errors */
+    public static double calcPpErrors(
+            List<Conll> conlls, List<List<Integer>> golds, List<KBest<Integer>> results, int k) {
+        Oracle<Integer> oracle = new Oracle<Integer>();
+        oracle.evaluate(golds, results, k);
+        List<SequenceResult<Integer>> bestResults = oracle.getBestResults();
+
+        double errorPercentage = 0.0;
+        int n = conlls.size();
+        int totalPps = 0;
+        for (int i = 0; i < n; i++) {
+            Conll conll = conlls.get(i);
+            int pos = 0;
+            for (ConllElement ele : conll.getElements()) {
+                if (ele.getCoarsePosTag().equals("IN")) {
+                    totalPps += 1;
+                    String goldTag;
+                    String predTag;
+                    if (golds.get(i).get(pos) == 0) {
+                        goldTag = "ROOT";
+                    } else {
+                        goldTag = conll.getElements().get(
+                                golds.get(i).get(pos) - 1).getCoarsePosTag();
+                    }
+                    if (bestResults.get(i).getSequence().get(pos) == 0) {
+                        predTag = "ROOT";
+                    } else {
+                        predTag = conll.getElements().get(
+                                bestResults.get(i).getSequence().get(pos) - 1)
+                                .getCoarsePosTag();
+                    }
+                    if (goldTag.equals(predTag) == false) {
+                        // // System.out.println(goldTag + "( " +
+                        // golds.get(i).get(pos) + ") " + predTag +
+                        // " (" + bestResults.get(i).getSequence().get(pos) +
+                        // ") sentence :"
+                        // + i);
+                        errorPercentage += 1;
+                    }
+                }
+                pos += 1;
+            }
+        }
+        return errorPercentage / totalPps;
     }
 }
