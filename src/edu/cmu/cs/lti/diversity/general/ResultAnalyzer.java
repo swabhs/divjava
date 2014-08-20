@@ -34,8 +34,7 @@ public class ResultAnalyzer<T> {
         double avgIterations[] = calculateAverageIterations(trueK);
 
         int round = (int) (hammingWt * 1000);
-        System.out.println("\nconv" + round + "=c(" + Arrays.toString(trueK)
-                + ")\n");
+        System.out.println("\nconv" + round + "=c(" + Arrays.toString(trueK) + ")\n");
         System.out.println("effK" + round + arrayAsStr(effK));
         System.out.println("avgacc" + round + arrayAsStr(avgAcc));
         System.out.println("oracle" + round + arrayAsStr(oracleAcc));

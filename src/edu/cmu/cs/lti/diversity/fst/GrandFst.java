@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.google.common.collect.Lists;
 
+import edu.cmu.cs.ark.cle.Pair;
 import edu.cmu.cs.lti.diversity.general.SequenceResult;
 
 /**
@@ -25,6 +26,8 @@ public class GrandFst {
             List<SequenceResult<Integer>> kBest, List<Map<Integer, Map<Integer, Double>>> dd) {
         List<Integer> seq = Lists.newArrayList(); // predicted sequence under
                                                   // the FST
+        List<Pair<Integer, Integer>> sequence = Lists.newArrayList();
+
         double seqScore = 0.0; // fst + dd score
         int sentSize = kBest.get(0).getSequence().size();
 
@@ -34,6 +37,7 @@ public class GrandFst {
             double maxScore = getLocalScore(kBest, parentTag, granTag, i)
                     + dd.get(i).get(parentTag).get(granTag);
             int bestTag = parentTag;
+            int bestGranTag = granTag;
             for (parentTag = 1; parentTag <= sentSize; parentTag++) {
                 if (parentTag == i + 1) {
                     continue; // child cannot be its own parent
@@ -47,13 +51,23 @@ public class GrandFst {
                     if (score > maxScore) {
                         maxScore = score;
                         bestTag = parentTag;
+                        bestGranTag = granTag;
                     }
                 }
             }
+            sequence.add(new Pair<Integer, Integer>(bestTag, bestGranTag));
             seq.add(bestTag);
             seqScore += maxScore;
         }
         return new SequenceResult<Integer>(seq, seqScore);
+    }
+
+    private boolean checkForAgreement(Pair<Integer, Integer> parGranPair, List<Integer> parents) {
+        boolean consistent = false;
+        for (int parent : parents) {
+
+        }
+        return consistent;
     }
 
     /**

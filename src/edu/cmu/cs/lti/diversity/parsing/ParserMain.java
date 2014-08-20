@@ -6,6 +6,7 @@ import java.util.List;
 import com.google.common.collect.Lists;
 
 import edu.cmu.cs.lti.diversity.general.KBest;
+import edu.cmu.cs.lti.diversity.general.ResultAnalyzer;
 import edu.cmu.cs.lti.diversity.utils.Conll;
 import edu.cmu.cs.lti.diversity.utils.Conll.ConllElement;
 import edu.cmu.cs.lti.diversity.utils.DataReader;
@@ -13,7 +14,7 @@ import edu.cmu.cs.lti.diversity.utils.DataWriter;
 import edu.cmu.cs.lti.diversity.utils.MyFileUtils;
 
 public class ParserMain {
-    private static String dataType; // = "data/parsing/amr.test";
+    private static String dataType = "data/parsing/ptb.dev";
     // private static final String conllFileName = dataType + ".conll";
     // private static final String weightsFileName = dataType + ".wts";
     // private static final String labelsFileName = dataType + ".labels";
@@ -25,18 +26,18 @@ public class ParserMain {
     private static String outDirectory;
 
     // runtime options
-    private static final int K = 100;
+    private static final int K = 50;
 
     // diversity metrics
     private static final boolean kbest = false;
     private static final boolean arc = false;
     private static final boolean pp = false;
-    private static final boolean sibling = true;
-    private static final boolean grand = false;
+    private static final boolean sibling = false;
+    private static final boolean grand = true;
 
     // DD options
     private static final double initialDdStepSize = 0.1; // value <= hammingWt
-    private static final int maxDdIterations = 100;
+    private static final int maxDdIterations = 200;
     private static final boolean useParseAnyway = true;
 
     // hyperparameters
@@ -47,7 +48,7 @@ public class ParserMain {
     private static List<Integer> visitedExamples;
 
     public static void main(String[] args) {
-        dataType = args[0];
+        // dataType = args[0];
         conllFileName = dataType + ".conll";
         weightsFileName = dataType + ".wts";
         labelsFileName = dataType + ".labels";
@@ -76,15 +77,15 @@ public class ParserMain {
             outDirectory = dataType + "/out_grand/";
         }
 
-        // List<List<Integer>> allGold = getGoldTrees(conlls);
-        // List<List<Integer>> visitedGold = new ArrayList<List<Integer>>();
-        // for (int example : visitedExamples) {
-        // visitedGold.add(allGold.get(example));
-        // }
-        //
-        // ResultAnalyzer<Integer> analyzer =
-        // new ResultAnalyzer<Integer>(predictions, visitedGold, K);
-        // analyzer.analyze(bestHammingWt);
+        List<List<Integer>> allGold = getGoldTrees(conlls);
+        List<List<Integer>> visitedGold = new ArrayList<List<Integer>>();
+        for (int example : visitedExamples) {
+            visitedGold.add(allGold.get(example));
+        }
+
+        ResultAnalyzer<Integer> analyzer =
+                new ResultAnalyzer<Integer>(predictions, visitedGold, K);
+        analyzer.analyze(bestHammingWt);
 
         List<String[][]> labels = DataReader.readEdgeLabels(labelsFileName);
         DataWriter.prepareConll(predictions, conlls, labels, K, outDirectory);
@@ -162,6 +163,9 @@ public class ParserMain {
             if (example % 1 == 0)
                 System.err.println("#" + example + "... len = " + allWeights.get(example).length);
 
+            if (allWeights.get(example).length > 25) {
+                continue;
+            }
             KBest<Integer> result = parser.runDualDecomposition(allWeights.get(example));
             predictions.add(result);
             visitedExamples.add(example);
